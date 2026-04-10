@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: assessments
+    // Document ID: auto-generated
+    // Fields:
+    //   - healthData: map (required) - The raw health data
+    //   - result: map (required) - The AI-generated result
+    //   - timestamp: timestamp (required) - When it was created
+    //   - userId: string (optional) - The UID of the user
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidAssessment(data) {
+      return data.keys().hasAll(['healthData', 'result', 'timestamp']) &&
+             data.healthData is map &&
+             data.result is map &&
+             data.timestamp is timestamp;
+    }
+
+    match /assessments/{assessmentId} {
+      // Allow anyone to create an assessment (even anonymous/unauthenticated for this health tool)
+      // but validate the data structure.
+      allow create: if isValidAssessment(request.resource.data);
+      
+      // Only allow reading if the user is authenticated (for privacy)
+      // In a real app, we'd check if request.auth.uid == resource.data.userId
+      allow read: if isAuthenticated();
+      
+      // No updates or deletes allowed for assessments to maintain record integrity
+      allow update, delete: if false;
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

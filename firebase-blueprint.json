@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Assessment": {
+      "title": "Assessment",
+      "description": "A cancer risk assessment record",
+      "type": "object",
+      "properties": {
+        "healthData": {
+          "type": "object",
+          "description": "The raw health data provided by the user"
+        },
+        "result": {
+          "type": "object",
+          "description": "The AI-generated assessment result"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the assessment was performed"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who performed the assessment"
+        }
+      },
+      "required": ["healthData", "result", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/assessments/{assessmentId}": {
+      "schema": "Assessment",
+      "description": "Collection of all health assessments"
+    }
+  }
+}
